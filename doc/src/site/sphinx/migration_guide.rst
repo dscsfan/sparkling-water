@@ -47,6 +47,9 @@ From 3.32 to 3.34
 
 - The support for Apache Spark 2.1.x has been removed.
 
+- The sub-columns of the ``prediction`` column produced byt ``H2OMOJOPipelineModel`` could be of the type ``float`` instead  of ``double``
+  if ``MOJOModelSettings.namedMojoOutputColumns`` is set to ``true``.
+
 From 3.30.1 to 3.32
 -------------------
 
