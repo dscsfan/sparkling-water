@@ -31,7 +31,7 @@ import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class H2OMOJOPipelineModelTestSuite extends FunSuite with SparkTestContext with Matchers{
+class H2OMOJOPipelineModelTestSuite extends FunSuite with SparkTestContext with Matchers {
 
   override def createSparkSession(): SparkSession = sparkSession("local[*]")
 
