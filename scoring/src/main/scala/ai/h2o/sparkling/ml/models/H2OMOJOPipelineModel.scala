@@ -36,8 +36,12 @@ class H2OMOJOPipelineModel(override val uid: String) extends H2OMOJOModelBase[H2
   H2OMOJOPipelineCache.startCleanupThread()
 
   // private parameter used to store MOJO output columns
-  protected final val outputCols: StringArrayParam = new StringArrayParam(this, "outputCols", "OutputCols")
-  protected final val outputTypes: StringArrayParam = new StringArrayParam(this, "outputTypes", "OutputTypes")
+  protected final val outputSubCols: StringArrayParam =
+    new StringArrayParam(this, "outputSubCols", "Names of sub-columns under the output column")
+  protected final val outputSubTypes: StringArrayParam =
+    new StringArrayParam(this, "outputSubTypes", "Types of sub-columns under the output column")
+
+  def getOutputSubCols(): Array[String] = ${outputSubCols}
 
   @transient private lazy val mojoPipeline: MojoPipeline = {
     H2OMOJOPipelineCache.getMojoBackend(uid, getMojo, this)
@@ -138,7 +142,7 @@ class H2OMOJOPipelineModel(override val uid: String) extends H2OMOJOModelBase[H2
 
   private def getPredictionColSchemaInternal(): StructType = {
     if (getNamedMojoOutputColumns()) {
-      val output = $(outputCols).zip($(outputTypes))
+      val output = getOutputSubCols().zip($(outputSubTypes))
       StructType(output.map { case (cn, ct) => StructField(cn, toSparkType(Type.valueOf(ct)), nullable = true) })
     } else {
       StructType(StructField("preds", ArrayType(DoubleType, containsNull = false), nullable = true) :: Nil)
@@ -157,7 +161,7 @@ class H2OMOJOPipelineModel(override val uid: String) extends H2OMOJOModelBase[H2
       }
       func(col(s"${getPredictionCol()}.`$column`")).alias(column)
     } else {
-      val idx = $(outputCols).indexOf(column)
+      val idx = getOutputSubCols().indexOf(column)
       col(s"${getPredictionCol()}.preds").getItem(idx).alias(column)
     }
   }
@@ -175,8 +179,8 @@ object H2OMOJOPipelineModel extends H2OMOJOReadable[H2OMOJOPipelineModel] with H
     val featureTypesMap = featureCols.zip(featureTypeNames).toMap
     val outputCols = pipelineMojo.getOutputMeta.getColumns.asScala
     model.set(model.featureTypes, featureTypesMap)
-    model.set(model.outputCols, outputCols.map(_.getColumnName).toArray)
-    model.set(model.outputTypes, outputCols.map(_.getColumnType.toString).toArray)
+    model.set(model.outputSubCols, outputCols.map(_.getColumnName).toArray)
+    model.set(model.outputSubTypes, outputCols.map(_.getColumnType.toString).toArray)
     model.set(model.convertUnknownCategoricalLevelsToNa -> settings.convertUnknownCategoricalLevelsToNa)
     model.set(model.convertInvalidNumbersToNa -> settings.convertInvalidNumbersToNa)
     model.set(model.namedMojoOutputColumns -> settings.namedMojoOutputColumns)
