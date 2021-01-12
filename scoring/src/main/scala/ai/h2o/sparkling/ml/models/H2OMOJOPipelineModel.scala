@@ -41,7 +41,7 @@ class H2OMOJOPipelineModel(override val uid: String) extends H2OMOJOModelBase[H2
   protected final val outputSubTypes: StringArrayParam =
     new StringArrayParam(this, "outputSubTypes", "Types of sub-columns under the output column")
 
-  def getOutputSubCols(): Array[String] = ${outputSubCols}
+  def getOutputSubCols(): Array[String] = $ { outputSubCols }
 
   @transient private lazy val mojoPipeline: MojoPipeline = {
     H2OMOJOPipelineCache.getMojoBackend(uid, getMojo, this)
