@@ -46,7 +46,6 @@ class H2OTargetEncoder(H2OTargetEncoderMOJOParams, H2OStageBase, JavaEstimator):
         kwargs = Utils.getInputKwargs(self)
         if 'inputCols' in kwargs:
             kwargs['inputCols'] = self._convertInputCols(kwargs['inputCols'])
-        print(kwargs)
         self._set(**kwargs)
         self.setInputCols(self.getInputCols())
 
