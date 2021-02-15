@@ -55,7 +55,7 @@ class H2OTargetEncoder(override val uid: String)
       "seed" -> getNoiseSeed(),
       "training_frame" -> input.frameId)
     val targetEncoderModelId = trainAndGetDestinationKey(s"/3/ModelBuilders/targetencoder", params)
-    input.delete()
+    // input.delete() TODO: Uncomment once TargetEncoderModel stops pointing to training DS.
     val model = new H2OTargetEncoderModel(uid, H2OModel(targetEncoderModelId)).setParent(this)
     copyValues(model)
   }
