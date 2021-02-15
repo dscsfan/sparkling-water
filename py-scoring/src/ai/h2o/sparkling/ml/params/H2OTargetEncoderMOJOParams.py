@@ -39,7 +39,7 @@ class H2OTargetEncoderMOJOParams(Params):
         Params._dummy(),
         "inputCols",
         "Names of columns that will be transformed",
-        H2OTypeConverters.toListString())
+        H2OTypeConverters.toNullableListListString())
 
     outputCols = Param(
         Params._dummy(),
@@ -92,13 +92,6 @@ and a global target value. The default value is 20.""",
         "A seed of the generator producing the random noise",
         H2OTypeConverters.toInt())
 
-    columnsToEncode = Param(
-        Params._dummy(),
-        "columnsToEncode",
-        "List of categorical columns or groups of categorical columns to encode. When groups of columns are specified, "
-        "each group is encoded as a single column (interactions are created internally",
-        H2OTypeConverters.toNullableListListString())
-
     ##
     # Getters
     ##
@@ -135,6 +128,3 @@ and a global target value. The default value is 20.""",
 
     def getNoiseSeed(self):
         return self.getOrDefault(self.noiseSeed)
-
-    def getColumnsToEncode(self):
-        return self.getOrDefault(self.columnsToEncode)
