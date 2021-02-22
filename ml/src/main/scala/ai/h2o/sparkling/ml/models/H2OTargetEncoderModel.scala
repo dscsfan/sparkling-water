@@ -63,7 +63,8 @@ class H2OTargetEncoderModel(override val uid: String, targetEncoderModel: H2OMod
     val relevantColumnsDF = flatDF.select(relevantColumns.map(col(_)): _*)
     val input = hc.asH2OFrame(relevantColumnsDF)
 
-    input.convertColumnsToCategorical(distinctInputCols)
+    val toCategorical = if (getProblemType() == "Regression") distinctInputCols else distinctInputCols ++ Seq(getLabelCol())
+    input.convertColumnsToCategorical(toCategorical)
     val internalOutputColumns = getInputCols().map(inputColumnNameToInternalOutputName)
     val outputFrameColumns = internalOutputColumns ++ Array(temporaryColumn)
     val conf = hc.getConf

@@ -59,6 +59,8 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
     val targetEncoder = new H2OTargetEncoder()
       .setInputCols(Array("RACE", "DPROS", "DCAPS"))
       .setLabelCol("AGE")
+      .setProblemType("Regression")
+
     val gbm = new H2OGBM().setLabelCol("AGE")
 
     val pipeline = new Pipeline().setStages(Array(targetEncoder, gbm))
@@ -71,6 +73,8 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
     val targetEncoder = new H2OTargetEncoder()
       .setInputCols(Array("RACE", "DPROS", "DCAPS"))
       .setLabelCol("AGE")
+      .setProblemType("Regression")
+
     val pipeline = new Pipeline().setStages(Array(targetEncoder))
 
     val model = pipeline.fit(trainingDataset)
@@ -87,6 +91,8 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
       .setInputCols(Array("RACE", "DPROS", "DCAPS"))
       .setLabelCol("AGE")
       .setNoise(0.5)
+      .setProblemType("Regression")
+
     val pipeline = new Pipeline().setStages(Array(targetEncoder))
 
     val model = pipeline.fit(trainingDataset)
@@ -101,6 +107,8 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
       .setLabelCol("AGE")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Regression")
+
     val targetEncoderModel = targetEncoder.fit(trainingDataset)
 
     val transformedByModel = targetEncoderModel.transformTrainingDataset(trainingDataset)
@@ -116,6 +124,8 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
       .setHoldoutStrategy("None")
       .setBlendedAvgEnabled(true)
       .setNoise(0.0)
+      .setProblemType("Regression")
+
     val targetEncoderModel = targetEncoder.fit(trainingDataset)
 
     val transformedByModel = targetEncoderModel.transformTrainingDataset(trainingDataset)
@@ -128,6 +138,7 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
     val targetEncoder = new H2OTargetEncoder()
       .setInputCols(Array("DCAPS"))
       .setLabelCol("AGE")
+      .setProblemType("Regression")
 
     val unexpectedValuesDF = testingDataset.withColumn("DCAPS", lit(10))
     val expectedValue = trainingDataset.groupBy().avg("AGE").collect()(0).getDouble(0)
@@ -143,6 +154,7 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
     val targetEncoder = new H2OTargetEncoder()
       .setInputCols(Array("DCAPS"))
       .setLabelCol("AGE")
+      .setProblemType("Regression")
 
     val unexpectedValuesDF = testingDataset.withColumn("DCAPS", lit(10))
     val expectedValue = trainingDataset.groupBy().avg("AGE").collect()(0).getDouble(0)
@@ -158,6 +170,7 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
     val targetEncoder = new H2OTargetEncoder()
       .setInputCols(Array("DCAPS"))
       .setLabelCol("AGE")
+      .setProblemType("Regression")
 
     val withNullsDF = testingDataset.withColumn("DCAPS", lit(null).cast(IntegerType))
     val expectedValue = trainingDataset.groupBy().avg("AGE").collect()(0).getDouble(0)
@@ -173,6 +186,7 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
     val targetEncoder = new H2OTargetEncoder()
       .setInputCols(Array("DCAPS"))
       .setLabelCol("AGE")
+      .setProblemType("Regression")
 
     val withNullsDF = testingDataset.withColumn("DCAPS", lit(null).cast(IntegerType))
     val expectedValue = trainingDataset.groupBy().avg("AGE").collect()(0).getDouble(0)
@@ -191,6 +205,7 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
       .setLabelCol("AGE")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Regression")
 
     val trainingWithNullsDF = trainingDataset
       .withColumn("DCAPS", when(rand(1) < 0.5, 'DCAPS).otherwise(lit(null)))
@@ -213,12 +228,14 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
       .setHoldoutStrategy("KFold")
       .setFoldCol("ID")
       .setNoise(0.0)
+      .setProblemType("Regression")
 
     val targetEncoderLeaveOneOut = new H2OTargetEncoder()
       .setInputCols(Array("RACE", "DPROS", "DCAPS"))
       .setLabelCol("AGE")
       .setHoldoutStrategy("LeaveOneOut")
       .setNoise(0.0)
+      .setProblemType("Regression")
 
     val modelKFold = targetEncoderKFold.fit(trainingDataset)
     val modelLeaveOneOut = targetEncoderLeaveOneOut.fit(trainingDataset)
@@ -236,6 +253,8 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
       .setLabelCol("AGE")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Regression")
+
     val datasetWithStrings = dataset
       .withColumn("RACE", 'RACE cast StringType)
       .withColumn("DPROS", 'DPROS cast StringType)
@@ -262,6 +281,8 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
       .setLabelCol("LABEL")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Regression")
+
     val model = targetEncoder.fit(trainingDatasetWithLabel)
 
     val transformedByModel = model.transformTrainingDataset(trainingDatasetWithLabel)
@@ -283,6 +304,8 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
       .setLabelCol("LABEL")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Regression")
+
     val model = targetEncoder.fit(trainingDatasetWithLabel)
 
     val transformedByModel = model.transformTrainingDataset(testingDatasetWithLabel)
@@ -305,6 +328,8 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
       .setLabelCol("LABEL")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Regression")
+
     val model = targetEncoder.fit(trainingDatasetWithLabel)
 
     val transformedByModel = model.transformTrainingDataset(testingDatasetWithLabel)
@@ -322,6 +347,7 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
         .setLabelCol("AGE")
         .setHoldoutStrategy("None")
         .setNoise(0.0)
+        .setProblemType("Regression")
 
       val model = targetEncoder.fit(trainingDataset)
       model.transformTrainingDataset(trainingDataset)
@@ -343,6 +369,7 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
         .setLabelCol("AGE")
         .setHoldoutStrategy("None")
         .setNoise(0.0)
+        .setProblemType("Regression")
 
       val model = targetEncoder.fit(trainingDataset)
       model.transform(testingDataset)
@@ -366,6 +393,7 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
       .setLabelCol("AGE")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Regression")
 
     val model = targetEncoder.fit(trainingSubDataset)
     val expectedResult = model.transformTrainingDataset(testingSubDataset)
@@ -388,6 +416,7 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
       .setLabelCol("AGE")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Regression")
 
     val model = targetEncoder.fit(trainingSubDataset)
     val expectedResult = model.transform(testingSubDataset)
@@ -409,6 +438,7 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
       .setLabelCol("AGE")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Regression")
 
     val model = targetEncoder.fit(trainingDataset)
     val expectedResult = model
@@ -430,6 +460,7 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
       .setLabelCol("AGE")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Regression")
 
     val model = targetEncoder.fit(trainingDataset)
     val expectedResult = model
@@ -450,6 +481,8 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
       .setLabelCol("AGE")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Regression")
+
     val expected = expectedTestingDataset
       .withColumn("DPROS_out", 'DPROS_te)
       .drop('DPROS_te)
@@ -473,6 +506,8 @@ class H2OTargetEncoderRegressionTestSuite extends FunSuite with Matchers with Sh
       .setLabelCol("AGE")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Regression")
+
     val expected = expectedTestingDataset
       .withColumn("DPROS_out", 'DPROS_te)
       .drop('DPROS_te)

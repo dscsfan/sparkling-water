@@ -45,9 +45,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
   private def loadDataFrameFromCsvAsResource(path: String): DataFrame = {
     val filePath = getClass.getResource(path).getFile
     spark.read
-      .option("header", "true")
-      .option("inferSchema", "true")
-      .csv(filePath)
+      .json(filePath)
       .withColumn("AGE", 'AGE.cast(StringType))
   }
 
@@ -55,12 +53,14 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
   private lazy val trainingDataset = dataset.limit(300).cache()
   private lazy val testingDataset = dataset.except(trainingDataset).cache()
   private lazy val expectedTestingDataset =
-    loadDataFrameFromCsvAsResource("/target_encoder/testing_dataset_transformed_multinomial.csv").cache()
+    loadDataFrameFromCsvAsResource("/target_encoder/testing_dataset_transformed_multinomial.json").cache()
 
   test("A pipeline with a target encoder transform training and testing dataset without an exception") {
     val targetEncoder = new H2OTargetEncoder()
       .setInputCols(Array("RACE", "DPROS", "DCAPS"))
       .setLabelCol("AGE")
+      .setProblemType("Multinomial")
+
     val gbm = new H2OGBM().setLabelCol("AGE")
 
     val pipeline = new Pipeline().setStages(Array(targetEncoder, gbm))
@@ -73,6 +73,8 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
     val targetEncoder = new H2OTargetEncoder()
       .setInputCols(Array("RACE", "DPROS", "DCAPS"))
       .setLabelCol("AGE")
+      .setProblemType("Multinomial")
+
     val pipeline = new Pipeline().setStages(Array(targetEncoder))
 
     val model = pipeline.fit(trainingDataset)
@@ -80,7 +82,6 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
     model.write.overwrite().save(path)
     val loadedModel = PipelineModel.load(path)
     val transformedTestingDataset = loadedModel.transform(testingDataset)
-
     TestUtils.assertDataFramesAreIdentical(expectedTestingDataset, transformedTestingDataset)
   }
 
@@ -89,6 +90,8 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
       .setInputCols(Array("RACE", "DPROS", "DCAPS"))
       .setLabelCol("AGE")
       .setNoise(0.5)
+      .setProblemType("Multinomial")
+
     val pipeline = new Pipeline().setStages(Array(targetEncoder))
 
     val model = pipeline.fit(trainingDataset)
@@ -103,6 +106,8 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
       .setLabelCol("AGE")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Multinomial")
+
     val targetEncoderModel = targetEncoder.fit(trainingDataset)
 
     val transformedByModel = targetEncoderModel.transformTrainingDataset(trainingDataset)
@@ -118,6 +123,8 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
       .setHoldoutStrategy("None")
       .setBlendedAvgEnabled(true)
       .setNoise(0.0)
+      .setProblemType("Multinomial")
+
     val targetEncoderModel = targetEncoder.fit(trainingDataset)
 
     val transformedByModel = targetEncoderModel.transformTrainingDataset(trainingDataset)
@@ -130,6 +137,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
     val targetEncoder = new H2OTargetEncoder()
       .setInputCols(Array("DCAPS"))
       .setLabelCol("AGE")
+      .setProblemType("Multinomial")
 
     val unexpectedValuesDF = testingDataset.withColumn("DCAPS", lit(10))
     val expectedValue = trainingDataset
@@ -150,6 +158,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
     val targetEncoder = new H2OTargetEncoder()
       .setInputCols(Array("DCAPS"))
       .setLabelCol("AGE")
+      .setProblemType("Multinomial")
 
     val unexpectedValuesDF = testingDataset.withColumn("DCAPS", lit(10))
     val expectedValue = trainingDataset
@@ -170,6 +179,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
     val targetEncoder = new H2OTargetEncoder()
       .setInputCols(Array("DCAPS"))
       .setLabelCol("AGE")
+      .setProblemType("Multinomial")
 
     val withNullsDF = testingDataset.withColumn("DCAPS", lit(null).cast(IntegerType))
     val expectedValue = trainingDataset
@@ -190,6 +200,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
     val targetEncoder = new H2OTargetEncoder()
       .setInputCols(Array("DCAPS"))
       .setLabelCol("AGE")
+      .setProblemType("Multinomial")
 
     val withNullsDF = testingDataset.withColumn("DCAPS", lit(null).cast(IntegerType))
     val expectedValue = trainingDataset
@@ -213,6 +224,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
       .setLabelCol("AGE")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Multinomial")
 
     val trainingWithNullsDF = trainingDataset
       .withColumn("DCAPS", when(rand(1) < 0.5, 'DCAPS).otherwise(lit(null)))
@@ -235,12 +247,14 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
       .setHoldoutStrategy("KFold")
       .setFoldCol("ID")
       .setNoise(0.0)
+      .setProblemType("Multinomial")
 
     val targetEncoderLeaveOneOut = new H2OTargetEncoder()
       .setInputCols(Array("RACE", "DPROS", "DCAPS"))
       .setLabelCol("AGE")
       .setHoldoutStrategy("LeaveOneOut")
       .setNoise(0.0)
+      .setProblemType("Multinomial")
 
     val modelKFold = targetEncoderKFold.fit(trainingDataset)
     val modelLeaveOneOut = targetEncoderLeaveOneOut.fit(trainingDataset)
@@ -258,6 +272,8 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
       .setLabelCol("AGE")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Multinomial")
+
     val datasetWithStrings = dataset
       .withColumn("RACE", 'RACE cast StringType)
       .withColumn("DPROS", 'DPROS cast StringType)
@@ -285,6 +301,8 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
       .setLabelCol("LABEL")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Multinomial")
+
     val model = targetEncoder.fit(trainingDatasetWithLabel)
 
     val transformedByModel = model.transformTrainingDataset(trainingDatasetWithLabel)
@@ -305,6 +323,8 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
       .setLabelCol("LABEL")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Multinomial")
+
     val model = targetEncoder.fit(trainingDatasetWithLabel)
 
     val transformedByModel = model.transformTrainingDataset(testingDatasetWithLabel)
@@ -326,6 +346,8 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
       .setLabelCol("LABEL")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Multinomial")
+
     val model = targetEncoder.fit(trainingDatasetWithLabel)
 
     val transformedByModel = model.transformTrainingDataset(testingDatasetWithLabel)
@@ -343,6 +365,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
         .setLabelCol("AGE")
         .setHoldoutStrategy("None")
         .setNoise(0.0)
+        .setProblemType("Multinomial")
 
       val model = targetEncoder.fit(trainingDataset)
       model.transformTrainingDataset(trainingDataset)
@@ -364,6 +387,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
         .setLabelCol("AGE")
         .setHoldoutStrategy("None")
         .setNoise(0.0)
+        .setProblemType("Multinomial")
 
       val model = targetEncoder.fit(trainingDataset)
       model.transform(testingDataset)
@@ -387,6 +411,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
       .setLabelCol("AGE")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Multinomial")
 
     val model = targetEncoder.fit(trainingSubDataset)
     val expectedResult = model.transformTrainingDataset(testingSubDataset)
@@ -409,6 +434,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
       .setLabelCol("AGE")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Multinomial")
 
     val model = targetEncoder.fit(trainingSubDataset)
     val expectedResult = model.transform(testingSubDataset)
@@ -430,6 +456,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
       .setLabelCol("AGE")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Multinomial")
 
     val model = targetEncoder.fit(trainingDataset)
     val expectedResult = model
@@ -451,6 +478,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
       .setLabelCol("AGE")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Multinomial")
 
     val model = targetEncoder.fit(trainingDataset)
     val expectedResult = model
@@ -471,6 +499,8 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
       .setLabelCol("AGE")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Multinomial")
+
     val expected = expectedTestingDataset
       .withColumn("DPROS_out", 'DPROS_te)
       .drop('DPROS_te)
@@ -494,6 +524,8 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
       .setLabelCol("AGE")
       .setHoldoutStrategy("None")
       .setNoise(0.0)
+      .setProblemType("Multinomial")
+
     val expected = expectedTestingDataset
       .withColumn("DPROS_out", 'DPROS_te)
       .drop('DPROS_te)
