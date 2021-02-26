@@ -45,7 +45,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
   private def loadDataFrameFromCsvAsResource(path: String): DataFrame = {
     val filePath = getClass.getResource(path).getFile
     spark.read
-      .json(filePath)
+      .parquet(filePath)
       .withColumn("AGE", 'AGE.cast(StringType))
   }
 
@@ -53,7 +53,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
   private lazy val trainingDataset = dataset.limit(300).cache()
   private lazy val testingDataset = dataset.except(trainingDataset).cache()
   private lazy val expectedTestingDataset =
-    loadDataFrameFromCsvAsResource("/target_encoder/testing_dataset_transformed_multinomial.json").cache()
+    loadDataFrameFromCsvAsResource("/target_encoder/testing_dataset_transformed_multinomial.parquet").cache()
 
   test("A pipeline with a target encoder transform training and testing dataset without an exception") {
     val targetEncoder = new H2OTargetEncoder()
@@ -82,6 +82,8 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
     model.write.overwrite().save(path)
     val loadedModel = PipelineModel.load(path)
     val transformedTestingDataset = loadedModel.transform(testingDataset)
+    expectedTestingDataset.printSchema()
+    transformedTestingDataset.printSchema()
     TestUtils.assertDataFramesAreIdentical(expectedTestingDataset, transformedTestingDataset)
   }
 

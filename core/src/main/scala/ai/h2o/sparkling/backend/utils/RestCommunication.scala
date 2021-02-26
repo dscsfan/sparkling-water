@@ -25,7 +25,7 @@ import ai.h2o.sparkling.backend.NodeDesc
 import ai.h2o.sparkling.backend.exceptions._
 import ai.h2o.sparkling.utils.ScalaUtils._
 import ai.h2o.sparkling.utils.{Compression, FinalizingOutputStream}
-import com.google.gson.{ExclusionStrategy, FieldAttributes, GsonBuilder}
+import com.google.gson.{ExclusionStrategy, FieldAttributes, Gson, GsonBuilder, JsonElement, JsonObject}
 import org.apache.commons.io.IOUtils
 import org.apache.spark.expose.Logging
 
@@ -182,7 +182,7 @@ trait RestCommunication extends Logging with RestEncodingUtils {
     }
   }
 
-  private def deserialize[ResultType: ClassTag](content: String, skippedFields: Seq[(Class[_], String)]): ResultType = {
+  private def createGsonSerde(skippedFields: Seq[(Class[_], String)]): Gson = {
     val builder = new GsonBuilder()
     val exclusionStrategy = new ExclusionStrategy() {
       override def shouldSkipField(f: FieldAttributes): Boolean = {
@@ -195,7 +195,19 @@ trait RestCommunication extends Logging with RestEncodingUtils {
       override def shouldSkipClass(incomingClass: Class[_]): Boolean = false
     }
     builder.addDeserializationExclusionStrategy(exclusionStrategy)
-    builder.create().fromJson(content, classTag[ResultType].runtimeClass)
+    builder.create()
+  }
+
+  private[sparkling] def deserialize[ResultType: ClassTag](content: String, skippedFields: Seq[(Class[_], String)]): ResultType = {
+    createGsonSerde(skippedFields).fromJson(content, classTag[ResultType].runtimeClass)
+  }
+
+  private[sparkling] def deserialize[ResultType: ClassTag](content: JsonElement, skippedFields: Seq[(Class[_], String)]): ResultType = {
+    createGsonSerde(skippedFields).fromJson(content, classTag[ResultType].runtimeClass)
+  }
+
+  private[sparkling] def deserializeAsJsonObject(content: String, skippedFields: Seq[(Class[_], String)]): JsonObject = {
+    createGsonSerde(skippedFields).fromJson(content, classOf[JsonObject])
   }
 
   protected def downloadBinaryURLContent(endpoint: URI, suffix: String, conf: H2OConf, file: File): Unit = {
@@ -288,7 +300,7 @@ trait RestCommunication extends Logging with RestEncodingUtils {
       conf: H2OConf,
       params: Map[String, Any] = Map.empty,
       encodeParamsAsJson: Boolean = false,
-      file: Option[String],
+      file: Option[String] = None,
       confirmationLoggingLevel: LoggingLevel = Info): InputStream = {
     val suffixWithParams =
       if (params.nonEmpty && (requestType == "GET")) s"$suffix?${stringifyParams(params)}" else suffix
