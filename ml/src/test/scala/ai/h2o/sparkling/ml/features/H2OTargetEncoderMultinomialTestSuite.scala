@@ -44,9 +44,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
 
   private def loadDataFrameFromCsvAsResource(path: String): DataFrame = {
     val filePath = getClass.getResource(path).getFile
-    spark.read
-      .parquet(filePath)
-      .withColumn("AGE", 'AGE.cast(StringType))
+    spark.read.parquet(filePath)
   }
 
   private lazy val dataset = loadDataFrameFromCsv("smalldata/prostate/prostate.csv")
@@ -82,9 +80,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
     model.write.overwrite().save(path)
     val loadedModel = PipelineModel.load(path)
     val transformedTestingDataset = loadedModel.transform(testingDataset)
-    expectedTestingDataset.printSchema()
-    transformedTestingDataset.printSchema()
-    TestUtils.assertDataFramesAreIdentical(expectedTestingDataset, transformedTestingDataset)
+    TestUtils.assertDataFramesAreIdenticalWithSavingProducedToFile(spark, expectedTestingDataset, transformedTestingDataset)
   }
 
   test("The target encoder doesn't apply noise on the testing dataset") {
@@ -99,7 +95,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
     val model = pipeline.fit(trainingDataset)
     val transformedTestingDataset = model.transform(testingDataset)
 
-    TestUtils.assertDataFramesAreIdentical(expectedTestingDataset, transformedTestingDataset)
+    TestUtils.assertDataFramesAreIdenticalWithSavingProducedToFile(spark, expectedTestingDataset, transformedTestingDataset)
   }
 
   test("TargetEncoderModel with disabled noise and TargetEncoderMOJOModel transform the training dataset the same way") {
@@ -135,86 +131,36 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
     TestUtils.assertDataFramesAreIdentical(transformedByModel, transformedByMOJOModel)
   }
 
-  test("TargetEncoderMOJOModel will use global average for unexpected values in the testing dataset") {
+  test("TargetEncoderMOJOModel treats nulls as unexpected values in the testing dataset") {
     val targetEncoder = new H2OTargetEncoder()
       .setInputCols(Array("DCAPS"))
       .setLabelCol("AGE")
       .setProblemType("Multinomial")
 
-    val unexpectedValuesDF = testingDataset.withColumn("DCAPS", lit(10))
-    val expectedValue = trainingDataset
-      .withColumn("AGE", 'AGE.cast(IntegerType))
-      .groupBy()
-      .avg("AGE")
-      .collect()(0)
-      .getDouble(0)
-    val expectedDF = unexpectedValuesDF.withColumn("DCAPS_te", lit(expectedValue))
-    val model = targetEncoder.fit(trainingDataset)
-
-    val resultDF = model.transform(unexpectedValuesDF)
-
-    TestUtils.assertDataFramesAreIdentical(expectedDF, resultDF)
-  }
-
-  test("TargetEncoderModel will use global average for unexpected values in the testing dataset") {
-    val targetEncoder = new H2OTargetEncoder()
-      .setInputCols(Array("DCAPS"))
-      .setLabelCol("AGE")
-      .setProblemType("Multinomial")
-
-    val unexpectedValuesDF = testingDataset.withColumn("DCAPS", lit(10))
-    val expectedValue = trainingDataset
-      .withColumn("AGE", 'AGE.cast(IntegerType))
-      .groupBy()
-      .avg("AGE")
-      .collect()(0)
-      .getDouble(0)
-    val expectedDF = unexpectedValuesDF.withColumn("DCAPS_te", lit(expectedValue))
-    val model = targetEncoder.fit(trainingDataset)
-
-    val resultDF = model.transformTrainingDataset(unexpectedValuesDF)
-
-    TestUtils.assertDataFramesAreIdentical(expectedDF, resultDF)
-  }
-
-  test("TargetEncoderMOJOModel will use global average for null values in the testing dataset") {
-    val targetEncoder = new H2OTargetEncoder()
-      .setInputCols(Array("DCAPS"))
-      .setLabelCol("AGE")
-      .setProblemType("Multinomial")
-
+    val unexpectedValuesDF = testingDataset.withColumn("DCAPS", lit(1000))
     val withNullsDF = testingDataset.withColumn("DCAPS", lit(null).cast(IntegerType))
-    val expectedValue = trainingDataset
-      .withColumn("AGE", 'AGE.cast(IntegerType))
-      .groupBy()
-      .avg("AGE")
-      .collect()(0)
-      .getDouble(0)
-    val expectedDF = withNullsDF.withColumn("DCAPS_te", lit(expectedValue))
+
     val model = targetEncoder.fit(trainingDataset)
 
-    val resultDF = model.transform(withNullsDF)
+    val expectedDF = model.transform(unexpectedValuesDF).drop("DCAPS")
+    val resultDF = model.transform(withNullsDF).drop("DCAPS")
 
     TestUtils.assertDataFramesAreIdentical(expectedDF, resultDF)
   }
 
-  test("TargetEncoderModel will use global average for null values in the testing dataset") {
+  test("TargetEncoderModel treats nulls as unexpected values in the testing dataset") {
     val targetEncoder = new H2OTargetEncoder()
       .setInputCols(Array("DCAPS"))
       .setLabelCol("AGE")
       .setProblemType("Multinomial")
 
+    val unexpectedValuesDF = testingDataset.withColumn("DCAPS", lit(1000))
     val withNullsDF = testingDataset.withColumn("DCAPS", lit(null).cast(IntegerType))
-    val expectedValue = trainingDataset
-      .withColumn("AGE", 'AGE.cast(IntegerType))
-      .groupBy()
-      .avg("AGE")
-      .collect()(0)
-      .getDouble(0)
-    val expectedDF = withNullsDF.withColumn("DCAPS_te", lit(expectedValue))
+
     val model = targetEncoder.fit(trainingDataset)
 
-    val resultDF = model.transformTrainingDataset(withNullsDF)
+    val expectedDF = model.transformTrainingDataset(unexpectedValuesDF).drop("DCAPS")
+    val resultDF = model.transformTrainingDataset(withNullsDF).drop("DCAPS")
 
     TestUtils.assertDataFramesAreIdentical(expectedDF, resultDF)
   }
@@ -288,8 +234,8 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
     val transformedByModel = model.transformTrainingDataset(testingDataset)
     val transformedByMOJOModel = model.transform(testingDataset)
 
-    TestUtils.assertDataFramesAreIdentical(expectedTestingDataset, transformedByModel)
-    TestUtils.assertDataFramesAreIdentical(expectedTestingDataset, transformedByMOJOModel)
+    TestUtils.assertDataFramesAreIdenticalWithSavingProducedToFile(spark, expectedTestingDataset, transformedByModel)
+    TestUtils.assertDataFramesAreIdenticalWithSavingProducedToFile(spark, expectedTestingDataset, transformedByMOJOModel)
   }
 
   test("The target encoder can work with arbitrary label categories") {
@@ -514,7 +460,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
     val model = targetEncoder.fit(trainingDataset)
     val transformedTestingDataset = model.transformTrainingDataset(testingDataset)
 
-    TestUtils.assertDataFramesAreIdentical(expected, transformedTestingDataset)
+    TestUtils.assertDataFramesAreIdenticalWithSavingProducedToFile(spark, expected, transformedTestingDataset)
   }
 
   test("TargetEncoderMOJOModel supports custom outputCols") {
@@ -539,6 +485,6 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
     val model = targetEncoder.fit(trainingDataset)
     val transformedTestingDataset = model.transform(testingDataset)
 
-    TestUtils.assertDataFramesAreIdentical(expected, transformedTestingDataset)
+    TestUtils.assertDataFramesAreIdenticalWithSavingProducedToFile(spark, expected, transformedTestingDataset)
   }
 }

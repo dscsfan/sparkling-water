@@ -17,6 +17,7 @@
 package ai.h2o.sparkling
 
 import java.io.File
+import java.nio.file.Files
 import java.sql.Timestamp
 
 import org.apache.spark.mllib
@@ -72,6 +73,29 @@ object TestUtils extends Matchers {
     val expectedNames = fieldNames(expected)
     val producedNames = fieldNames(produced)
     producedNames shouldEqual expectedNames
+  }
+
+  def assertDataFramesAreIdenticalWithSavingProducedToFile(
+      spark:SparkSession,
+      expected: DataFrame,
+      produced: DataFrame): Unit = {
+    val tmpDir = Files.createTempDirectory("dfComparison").toFile
+    val loadedProduced = try {
+      val path = tmpDir.getAbsolutePath + "/file"
+      produced.write.parquet(path)
+      spark.read.parquet(path)
+    } finally {
+      deleteOnExit(tmpDir)
+    }
+    assertDataFramesAreIdentical(expected, loadedProduced)
+  }
+
+  def deleteOnExit(folder: File): Unit = {
+    folder.deleteOnExit
+    for (f <- folder.listFiles) {
+      if (f.isDirectory) deleteOnExit(f)
+      else f.deleteOnExit
+    }
   }
 
   def assertDataFramesAreIdentical(expected: DataFrame, produced: DataFrame): Unit = {
