@@ -22,11 +22,13 @@ import ai.h2o.sparkling.backend.utils.{RestApiUtils, RestCommunication}
 import ai.h2o.sparkling.ml.internals.H2OModel
 import ai.h2o.sparkling.ml.utils.SchemaUtils
 import org.apache.spark.ml.Model
+import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.util.{MLWritable, MLWriter}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Dataset}
 import water.api.schemas3.KeyV3.FrameKeyV3
+
 import scala.collection.JavaConverters._
 
 class H2OTargetEncoderModel(override val uid: String, targetEncoderModel: H2OModel)
@@ -85,7 +87,9 @@ class H2OTargetEncoderModel(override val uid: String, targetEncoderModel: H2OMod
     output.delete()
     val renamedOutputColumnsOnlyDF = getOutputCols().zip(internalOutputColumns).foldLeft(outputColumnsOnlyDF) {
       case (df, (to, Seq(from))) => df.withColumnRenamed(from, to)
-      case (df, (to, from)) => df.withColumn(to, array(from.map(col): _*)).drop(from: _*)
+      case (df, (to, from)) =>
+        val assembler = new VectorAssembler().setInputCols(from.toArray).setOutputCol(to)
+        assembler.transform(df).drop(from: _*)
     }
     withIdDF
       .join(renamedOutputColumnsOnlyDF, Seq(temporaryColumn), joinType = "left")

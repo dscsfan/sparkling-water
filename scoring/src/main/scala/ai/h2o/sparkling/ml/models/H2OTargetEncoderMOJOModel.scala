@@ -24,6 +24,7 @@ import _root_.hex.genmodel.algos.targetencoder.TargetEncoderMojoModel
 import _root_.hex.genmodel.easy.EasyPredictModelWrapper
 import ai.h2o.sparkling.ml.utils.Utils
 import org.apache.spark.ml.Model
+import org.apache.spark.ml.linalg.{DenseVector, Vector}
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.expressions.UserDefinedFunction
@@ -92,12 +93,12 @@ case class H2OTargetEncoderMOJOUdfWrapper(mojoGetter: () => File, outputCols: Ar
   @transient private lazy val positions: Seq[Int] = mojoModel._inoutMapping.asScala.map(_.to.length).scanLeft(0)(_ + _)
 
   val mojoUdf: UserDefinedFunction = if (problemType == "Multinomial") {
-    udf[Array[Option[Array[Double]]], Row] { r: Row =>
+    udf[Array[Option[Vector]], Row] { r: Row =>
       val inputRowData = RowConverter.toH2ORowData(r)
       try {
         val prediction = easyPredictModelWrapper.predictTargetEncoding(inputRowData)
         positions.sliding(2).map {
-          case Seq(current, next) => Some(prediction.transformations.slice(current, next))
+          case Seq(current, next) => Some(new DenseVector(prediction.transformations.slice(current, next)).compressed)
         }.toArray
       } catch {
         case _: Throwable => outputCols.map(_ => None)

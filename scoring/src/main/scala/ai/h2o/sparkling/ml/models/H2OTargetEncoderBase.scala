@@ -18,14 +18,15 @@
 package ai.h2o.sparkling.ml.models
 
 import ai.h2o.sparkling.ml.params.H2OTargetEncoderMOJOParams
+import org.apache.spark.ExposeUtils
 import org.apache.spark.ml.PipelineStage
-import org.apache.spark.sql.types.{ArrayType, DoubleType, NumericType, StructField, StructType}
+import org.apache.spark.sql.types.{DoubleType, NumericType, StructField, StructType}
 
 trait H2OTargetEncoderBase extends PipelineStage with H2OTargetEncoderMOJOParams {
   override def transformSchema(schema: StructType): StructType = {
     validateSchema(schema)
     val outputType = if (getProblemType() == "Multinomial") {
-      ArrayType(DoubleType, containsNull = false)
+      ExposeUtils.getMLVectorUDT()
     } else {
       DoubleType
     }

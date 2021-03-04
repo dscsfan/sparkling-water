@@ -80,7 +80,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
     model.write.overwrite().save(path)
     val loadedModel = PipelineModel.load(path)
     val transformedTestingDataset = loadedModel.transform(testingDataset)
-    TestUtils.assertDataFramesAreIdenticalWithSavingProducedToFile(spark, expectedTestingDataset, transformedTestingDataset)
+    TestUtils.assertDataFramesAreIdentical(expectedTestingDataset, transformedTestingDataset)
   }
 
   test("The target encoder doesn't apply noise on the testing dataset") {
@@ -95,7 +95,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
     val model = pipeline.fit(trainingDataset)
     val transformedTestingDataset = model.transform(testingDataset)
 
-    TestUtils.assertDataFramesAreIdenticalWithSavingProducedToFile(spark, expectedTestingDataset, transformedTestingDataset)
+    TestUtils.assertDataFramesAreIdentical(expectedTestingDataset, transformedTestingDataset)
   }
 
   test("TargetEncoderModel with disabled noise and TargetEncoderMOJOModel transform the training dataset the same way") {
@@ -234,8 +234,8 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
     val transformedByModel = model.transformTrainingDataset(testingDataset)
     val transformedByMOJOModel = model.transform(testingDataset)
 
-    TestUtils.assertDataFramesAreIdenticalWithSavingProducedToFile(spark, expectedTestingDataset, transformedByModel)
-    TestUtils.assertDataFramesAreIdenticalWithSavingProducedToFile(spark, expectedTestingDataset, transformedByMOJOModel)
+    TestUtils.assertDataFramesAreIdentical(expectedTestingDataset, transformedByModel)
+    TestUtils.assertDataFramesAreIdentical(expectedTestingDataset, transformedByMOJOModel)
   }
 
   test("The target encoder can work with arbitrary label categories") {
@@ -460,7 +460,7 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
     val model = targetEncoder.fit(trainingDataset)
     val transformedTestingDataset = model.transformTrainingDataset(testingDataset)
 
-    TestUtils.assertDataFramesAreIdenticalWithSavingProducedToFile(spark, expected, transformedTestingDataset)
+    TestUtils.assertDataFramesAreIdentical(expected, transformedTestingDataset)
   }
 
   test("TargetEncoderMOJOModel supports custom outputCols") {
@@ -485,6 +485,6 @@ class H2OTargetEncoderMultinomialTestSuite extends FunSuite with Matchers with S
     val model = targetEncoder.fit(trainingDataset)
     val transformedTestingDataset = model.transform(testingDataset)
 
-    TestUtils.assertDataFramesAreIdenticalWithSavingProducedToFile(spark, expected, transformedTestingDataset)
+    TestUtils.assertDataFramesAreIdentical(expected, transformedTestingDataset)
   }
 }
