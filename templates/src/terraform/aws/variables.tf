@@ -5,7 +5,7 @@ variable "aws_access_key" {}
 variable "aws_secret_key" {}
 
 variable "aws_ssh_public_key" {
-  default = ""
+  default = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCMjTfWuib6GKLx0oLgu60kQQu9BBHvhQdJuwePpuDmTGbdgstfjCA8RPp85bU1d9E5bTaeAKHeB3UcqOXvtTk3AhawoXbf6Z510ggazw4LRTnfYvzX42cJ5DW1hBFEvC4YjZlx3TJ0erSiVwzatiL6AiTDmm+HG7KJjnaF2IhMQM+kIM+aCRs7HW+87FFid/UXBO4nrctxKNgKmXOLPFU7nZdqsm8AvrTvdKo0OiHnUx9OpU+Me9eEbmxox4If1TUUqNbVw5XOXj0HVrTPKn0NLtuScDUfWeTfAsiT7SQFR18qNfUmQ/7NX6Ian5Sme+shMfHH072ON3fNZLFNKWFz email@example.com"
 }
 variable "aws_region" {
   default = "us-east-1"
