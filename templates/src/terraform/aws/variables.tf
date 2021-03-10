@@ -28,3 +28,13 @@ variable "sw_version" {
 variable "jupyter_name" {
   default = "admin"
 }
+
+#the block below added by Song
+variable "aws_vpc_id" {
+  
+}
+
+variable "aws_subnet_id" {
+  
+}
+#end block - Song
