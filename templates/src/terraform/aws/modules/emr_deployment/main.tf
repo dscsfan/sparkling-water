@@ -118,8 +118,10 @@ resource "aws_emr_cluster" "sparkling-water-cluster" {
   ec2_attributes {
     subnet_id = data.aws_subnet.main.id
     key_name = aws_key_pair.key.key_name
-    emr_managed_master_security_group = var.emr_managed_master_security_group_id
-    emr_managed_slave_security_group = var.emr_managed_slave_security_group_id
+    #emr_managed_master_security_group = var.emr_managed_master_security_group_id
+    #emr_managed_slave_security_group = var.emr_managed_slave_security_group_id
+    emr_managed_master_security_group = "sg-04e39ad76b90f3a5e"
+    emr_managed_slave_security_group = "sg-0f503a30bb11c8189"
     instance_profile = var.emr_ec2_instance_profile_arn
   }
 
